@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Kendoku Oyunu</title>
+
+<!-- PWA / iOS meta -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#f2f2f7">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Kendoku">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- iOS "Ana Ekrana Ekle" ipucu -->
+<div id="ios-banner" class="ios-banner hidden">
+  <span>Bu uygulamayı yüklemek için <b>Paylaş</b> ikonuna, ardından <b>“Ana Ekrana Ekle”</b> seçeneğine dokunun.</span>
+  <button id="ios-banner-close" aria-label="Kapat">✕</button>
+</div>
+
+<!-- ================= ANA OYUN EKRANI ================= -->
+<div id="screen-game" class="screen active">
+  <header class="nav-bar">
+    <div class="nav-title-block">
+      <h1 class="app-title">Kendoku</h1>
+      <label class="switch-row">
+        <span class="switch-text">Beni Destekle</span>
+        <span class="switch">
+          <input type="checkbox" id="chk-destek" checked>
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+        </span>
+      </label>
+    </div>
+  </header>
+
+  <div class="levels-grid" id="levels-grid"></div>
+
+  <div class="board-wrapper">
+    <div id="board" class="board"></div>
+  </div>
+
+  <div class="toolbar">
+    <button id="btn-solver" class="toolbar-btn">🧩 Kendoku Çözücü</button>
+    <button id="btn-howto" class="toolbar-btn">❓ Nasıl Oynanır ?</button>
+  </div>
+
+  <div class="status-bar">
+    <span id="lbl-error">Yapılan Hata Sayısı : 0</span>
+    <span id="lbl-level">Seviye: -</span>
+    <span id="lbl-time">Geçen Zaman : 00:00</span>
+  </div>
+</div>
+
+<!-- ================= ÇÖZÜCÜ EKRANI ================= -->
+<div id="screen-solver" class="screen slide-right">
+  <header class="nav-bar">
+    <button class="nav-btn" id="solver-back">‹ Oyun</button>
+    <h1 class="app-title small">Kendoku Çözücü</h1>
+    <span class="nav-spacer"></span>
+  </header>
+
+  <div id="solver-info" class="info-label">Bulmaca bilgilerini "Oyundan Al" ile çekin.</div>
+
+  <div class="board-wrapper">
+    <div id="solver-board" class="board"></div>
+  </div>
+
+  <div class="solver-actions">
+    <button id="solver-load" class="action-btn">Oyundan Al</button>
+    <button id="solver-clear" class="action-btn">Temizle</button>
+    <button id="solver-solve" class="action-btn">Çözüm</button>
+    <button id="solver-transfer" class="action-btn">Oyuna Aktar</button>
+  </div>
+
+  <div id="solver-status" class="info-label"></div>
+</div>
+
+<!-- ================= NASIL OYNANIR EKRANI ================= -->
+<div id="screen-howto" class="screen slide-up">
+  <header class="nav-bar">
+    <span class="nav-spacer"></span>
+    <h1 class="app-title small">Nasıl Oynanır ?</h1>
+    <button class="nav-btn" id="howto-close">Kapat</button>
+  </header>
+
+  <div class="howto-content">
+    <h2>Kendoku (KenKen) Nasıl Oynanır ?</h2>
+
+    <h3>GENEL KURAL</h3>
+    <p>
+      Kendoku, N x N boyutunda bir ızgarada oynanır (bu oyunda seviyeye göre
+      4x4 ile 9x9 arasında değişir).<br>
+      Her satırda 1'den N'e kadar olan sayılar yalnızca bir kez kullanılmalıdır.<br>
+      Her sütunda da 1'den N'e kadar olan sayılar yalnızca bir kez kullanılmalıdır.<br>
+      Sudoku'dan farklı olarak 3x3 kutu kuralı YOKTUR. Onun yerine
+      <b>"kafes" (cage)</b> kuralı vardır.
+    </p>
+
+    <h3>KAFESLER (CAGE)</h3>
+    <p>
+      Izgara, kalın siyah çizgilerle ayrılmış bölgelere (kafeslere) bölünmüştür.<br>
+      Her kafesin sol üst hücresinde küçük bir hedef sayı ve (varsa) bir işlem
+      sembolü (+, -, ×, ÷) yazılıdır. Örnek: "6+", "12×", "3-", "2÷".<br>
+      O kafese ait TÜM hücrelere yerleştirdiğiniz sayılar, belirtilen işlem
+      uygulandığında yazan hedef sayıyı vermelidir.
+    </p>
+
+    <h3>İŞLEM TÜRLERİ</h3>
+    <p>
+      <b>1. Toplama (+):</b> Kafesteki tüm sayıların toplamı hedefe eşit olmalıdır.
+      Örnek: "7+" yazan 3 hücreli bir kafese 1, 2, 4 yazılabilir (1+2+4=7).<br><br>
+      <b>2. Çarpma (×):</b> Kafesteki tüm sayıların çarpımı hedefe eşit olmalıdır.
+      Örnek: "12×" yazan 2 hücreli bir kafese 3 ve 4 yazılabilir (3×4=12).<br><br>
+      <b>3. Çıkarma (-):</b> Yalnızca 2 hücreli kafeslerde kullanılır. Büyük sayıdan
+      küçük sayı çıkarıldığında hedefe eşit olmalıdır.
+      Örnek: "3-" yazan kafeye 5 ve 2 yazılabilir (5-2=3).<br><br>
+      <b>4. Bölme (÷):</b> Yalnızca 2 hücreli kafeslerde kullanılır. Büyük sayı küçük
+      sayıya bölündüğünde hedefe eşit olmalıdır.
+      Örnek: "2÷" yazan kafeye 6 ve 3 yazılabilir (6/3=2).<br><br>
+      <b>5. İşlemsiz tek hücreli kafes:</b> Sadece bir sayı yazılıdır, işlem sembolü
+      yoktur. O hücreye doğrudan yazan sayı yazılmalıdır. Bu bir ipucudur.
+    </p>
+
+    <h3>ÖNEMLİ NOT</h3>
+    <p>
+      Aynı kafes içindeki hücreler aynı satır ya da sütunda olmak zorunda
+      değildir. Bu yüzden aynı kafeste farklı satır/sütundaki hücrelere
+      aynı sayı yazılabilir; yasak olan sadece AYNI satır veya AYNI sütunda
+      sayı tekrarıdır.<br>
+      Toplama ve çarpmada hücrelerin sırası önemli değildir.<br>
+      Çıkarma ve bölmede ise yalnızca 2 hücre olduğu için büyükten küçüğü
+      çıkarmak / büyüğü küçüğe bölmek yeterlidir, hangi hücrenin büyük
+      olduğu önemli değildir.
+    </p>
+
+    <h3>RENK ANLAMLARI</h3>
+    <p>
+      <span class="dot" style="background:#ffcc80"></span> <b>Turuncu:</b> Bir çakışma olduğunu gösterir.
+      Aynı satır/sütunda tekrar eden sayı, kafesin toplamının/çarpımının hedefi
+      şimdiden aşması ya da tamamlanmış bir kafesin hedefi tutturamaması
+      anlamına gelebilir.<br>
+      <span class="dot" style="background:#ff3b30"></span> <b>Kırmızı</b> ("Beni Destekle" açıkken): Girdiğiniz
+      sayının çözüme göre yanlış olduğunu gösterir.<br>
+      <span class="dot" style="background:#007aff"></span> <b>Mavi:</b> Doğru ya da henüz değerlendirilmemiş giriş.
+    </p>
+
+    <h3>SEVİYELER</h3>
+    <p>
+      Çok Kolay : 4x4 &nbsp;&nbsp; Zor : 7x7<br>
+      Kolay : 5x5 &nbsp;&nbsp; Çok Zor : 8x8<br>
+      Normal : 6x6 &nbsp;&nbsp; En Zor : 9x9
+    </p>
+
+    <h3>OYUNU KAZANMA</h3>
+    <p>
+      Tüm hücreleri, hiçbir çakışma kalmayacak şekilde (turuncu renk
+      görünmeyecek şekilde) doldurduğunuzda bulmaca tamamlanmış olur.
+    </p>
+
+    <h3>KENDOKU ÇÖZÜCÜ</h3>
+    <p>
+      "Kendoku Çözücü" ekranından mevcut oyununuzu çekebilir, çözümü
+      görebilir ve isterseniz doğrudan oyuna aktarabilirsiniz.
+    </p>
+  </div>
+
+  <footer class="howto-footer">
+    <span class="author">Erkan Alptekin ® ikimsn@yahoo.com</span>
+  </footer>
+</div>
+
+<!-- ================= GENEL MODAL (Alert/Confirm) ================= -->
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h3 id="modal-title"></h3>
+    <p id="modal-message"></p>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
+
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
